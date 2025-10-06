@@ -62,7 +62,7 @@ export default function DashboardPage() {
   const fetchTrackedEmails = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/tracked-emails', {
+      const response = await api.get('/api/tracked-emails', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
@@ -88,7 +88,7 @@ export default function DashboardPage() {
         return;
       }
 
-      await api.post('/gmail/sync-emails', {
+      await api.post('/api/gmail/sync-emails', {
         providerToken: currentSession.provider_token,
         providerRefreshToken: currentSession.provider_refresh_token,
       }, {

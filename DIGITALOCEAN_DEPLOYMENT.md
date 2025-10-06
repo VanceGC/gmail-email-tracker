@@ -7,9 +7,13 @@ Complete step-by-step guide to deploy VGCMail on a DigitalOcean Droplet with you
 ## 📋 Prerequisites
 
 - ✅ DigitalOcean account
+
 - ✅ Domain registered (vgcmail.app)
+
 - ✅ GitHub repository access
+
 - ✅ Supabase project set up
+
 - ✅ Stripe account configured
 
 ---
@@ -19,19 +23,23 @@ Complete step-by-step guide to deploy VGCMail on a DigitalOcean Droplet with you
 ### 1.1 Create Droplet
 
 1. Log in to [DigitalOcean](https://cloud.digitalocean.com)
-2. Click **"Create"** → **"Droplets"**
-3. **Choose Configuration:**
-   - **Image:** Ubuntu 22.04 LTS x64
-   - **Plan:** Basic
-   - **CPU Options:** Regular (Shared CPU)
-   - **Size:** $12/month (2 GB RAM, 1 vCPU, 50 GB SSD) - Recommended minimum
-   - **Datacenter:** Choose closest to your users
-   - **Authentication:** SSH keys (recommended) or Password
-   - **Hostname:** vgcmail-production
 
-4. Click **"Create Droplet"**
-5. Wait 1-2 minutes for droplet to be created
-6. **Note your droplet's IP address** (e.g., 164.90.xxx.xxx)
+1. Click **"Create"** → **"Droplets"**
+
+1. **Choose Configuration:**
+  - **Image:** Ubuntu 22.04 LTS x64
+  - **Plan:** Basic
+  - **CPU Options:** Regular (Shared CPU)
+  - **Size:** $12/month (2 GB RAM, 1 vCPU, 50 GB SSD) - Recommended minimum
+  - **Datacenter:** Choose closest to your users
+  - **Authentication:** SSH keys (recommended) or Password
+  - **Hostname:** vgcmail-production
+
+1. Click **"Create Droplet"**
+
+1. Wait 1-2 minutes for droplet to be created
+
+1. **Note your droplet's IP address** (e.g., 164.90.xxx.xxx)
 
 ---
 
@@ -59,6 +67,7 @@ TTL: 3600
 ```
 
 **Example:**
+
 ```
 A    @      164.90.xxx.xxx
 A    www    164.90.xxx.xxx
@@ -120,6 +129,7 @@ sudo apt install -y nodejs
 ```
 
 Verify installation:
+
 ```bash
 node --version  # Should show v22.x.x
 npm --version   # Should show 10.x.x
@@ -169,12 +179,14 @@ npm install
 ```
 
 Create `.env` file:
+
 ```bash
 nano .env
 ```
 
 Add the following (replace with your actual values):
-```env
+
+```
 PORT=3001
 SUPABASE_URL=https://rsrmzsqfxwltwptgvpiz.supabase.co
 SUPABASE_SERVICE_KEY=your_service_role_key_here
@@ -195,12 +207,14 @@ pnpm install
 ```
 
 Create `.env` file:
+
 ```bash
 nano .env
 ```
 
 Add the following:
-```env
+
+```
 VITE_API_URL=https://api.vgcmail.app
 VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
 ```
@@ -259,7 +273,7 @@ sudo nano /etc/nginx/sites-available/vgcmail
 
 Add the following configuration:
 
-```nginx
+```
 # Frontend - vgcmail.app
 server {
     listen 80;
@@ -365,10 +379,14 @@ sudo certbot --nginx -d vgcmail.app -d www.vgcmail.app -d api.vgcmail.app
 ```
 
 Follow the prompts:
+
 1. Enter your email address
-2. Agree to terms of service (Y)
-3. Share email with EFF (optional - Y or N)
-4. Choose option 2: Redirect HTTP to HTTPS
+
+1. Agree to terms of service (Y)
+
+1. Share email with EFF (optional - Y or N)
+
+1. Choose option 2: Redirect HTTP to HTTPS
 
 ### 8.2 Verify SSL Auto-Renewal
 
@@ -381,8 +399,10 @@ Should show: "Congratulations, all simulated renewals succeeded"
 ### 8.3 Test Your Sites
 
 Open in browser:
-- https://vgcmail.app (should show landing page)
-- https://api.vgcmail.app/health (should show API health check)
+
+- [https://vgcmail.app](https://vgcmail.app) (should show landing page)
+
+- [https://api.vgcmail.app/health](https://api.vgcmail.app/health) (should show API health check)
 
 ---
 
@@ -391,15 +411,20 @@ Open in browser:
 ### 9.1 Update Stripe Webhook Endpoint
 
 1. Go to [Stripe Dashboard](https://dashboard.stripe.com/webhooks)
-2. Click **"Add endpoint"**
-3. **Endpoint URL:** `https://api.vgcmail.app/api/webhooks/stripe`
-4. **Events to send:**
-   - `checkout.session.completed`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_failed`
-5. Click **"Add endpoint"**
-6. Copy the **Signing secret** (starts with `whsec_`)
+
+1. Click **"Add endpoint"**
+
+1. **Endpoint URL:** `https://api.vgcmail.app/api/webhooks/stripe`
+
+1. **Events to send:**
+  - `checkout.session.completed`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+  - `invoice.payment_failed`
+
+1. Click **"Add endpoint"**
+
+1. Copy the **Signing secret** (starts with `whsec_`)
 
 ### 9.2 Update Backend Environment Variable
 
@@ -408,7 +433,8 @@ nano ~/gmail-email-tracker/backend/.env
 ```
 
 Update the line:
-```env
+
+```
 STRIPE_WEBHOOK_SECRET=whsec_your_actual_signing_secret_here
 ```
 
@@ -431,48 +457,67 @@ In Stripe Dashboard, click "Send test webhook" to verify it's working.
 ### 10.1 Update Supabase Auth URLs
 
 1. Go to [Supabase Dashboard](https://supabase.com/dashboard/project/rsrmzsqfxwltwptgvpiz)
-2. Click **"Authentication"** → **"URL Configuration"**
-3. Update:
-   - **Site URL:** `https://vgcmail.app`
-   - **Redirect URLs:** Add these:
-     - `https://vgcmail.app/dashboard`
-     - `https://vgcmail.app/login`
-     - `https://vgcmail.app/signup`
-     - `https://www.vgcmail.app/dashboard`
-     - `https://www.vgcmail.app/login`
-     - `https://www.vgcmail.app/signup`
-4. Click **"Save"**
+
+1. Click **"Authentication"** → **"URL Configuration"**
+
+1. Update:
+  - **Site URL:** `https://vgcmail.app`
+    - **Redirect URLs:** Add these:
+      - `https://vgcmail.app/dashboard`
+      - `https://vgcmail.app/login`
+      - `https://vgcmail.app/signup`
+      - `https://www.vgcmail.app/dashboard`
+      - `https://www.vgcmail.app/login`
+      - `https://www.vgcmail.app/signup`
+
+1. Click **"Save"**
 
 ---
 
 ## 🧪 Step 11: Test Your Application
 
 ### 11.1 Test Frontend
-1. Visit https://vgcmail.app
-2. Should see landing page
-3. Click "Get Started" → Should go to signup
-4. Click "Pricing" → Should show pricing page
+
+1. Visit [https://vgcmail.app](https://vgcmail.app)
+
+1. Should see landing page
+
+1. Click "Get Started" → Should go to signup
+
+1. Click "Pricing" → Should show pricing page
 
 ### 11.2 Test Signup Flow
-1. Go to https://vgcmail.app/signup
-2. Create a new account
-3. Check email for confirmation (if enabled)
-4. Should redirect to dashboard
+
+1. Go to [https://vgcmail.app/signup](https://vgcmail.app/signup)
+
+1. Create a new account
+
+1. Check email for confirmation (if enabled)
+
+1. Should redirect to dashboard
 
 ### 11.3 Test Stripe Checkout
-1. Go to https://vgcmail.app/pricing
-2. Click "Start Pro Trial"
-3. Use test card: `4242 4242 4242 4242`
-4. Complete checkout
-5. Should redirect to dashboard
-6. Check Stripe Dashboard for new subscription
+
+1. Go to [https://vgcmail.app/pricing](https://vgcmail.app/pricing)
+
+1. Click "Start Pro Trial"
+
+1. Use test card: `4242 4242 4242 4242`
+
+1. Complete checkout
+
+1. Should redirect to dashboard
+
+1. Check Stripe Dashboard for new subscription
 
 ### 11.4 Test API Health
+
 ```bash
 curl https://api.vgcmail.app/health
 ```
 
 Should return:
+
 ```json
 {"status":"ok","message":"VGCMail API is running"}
 ```
@@ -568,7 +613,9 @@ sudo systemctl start fail2ban
 ### 14.3 Regular Backups
 
 Setup automated backups of:
+
 - `/home/vgcmail/gmail-email-tracker/` (application code)
+
 - Supabase database (use Supabase's backup feature)
 
 ---
@@ -578,6 +625,7 @@ Setup automated backups of:
 ### Issue: Frontend shows 404 errors
 
 **Solution:**
+
 ```bash
 cd ~/gmail-email-tracker/frontend
 pnpm run build
@@ -587,6 +635,7 @@ sudo systemctl restart nginx
 ### Issue: Backend not responding
 
 **Solution:**
+
 ```bash
 pm2 restart vgcmail-api
 pm2 logs vgcmail-api
@@ -595,6 +644,7 @@ pm2 logs vgcmail-api
 ### Issue: SSL certificate errors
 
 **Solution:**
+
 ```bash
 sudo certbot renew
 sudo systemctl restart nginx
@@ -603,6 +653,7 @@ sudo systemctl restart nginx
 ### Issue: Can't connect to API
 
 **Solution:**
+
 ```bash
 # Check if backend is running
 pm2 status
@@ -617,9 +668,12 @@ sudo ufw status
 ### Issue: Stripe webhooks failing
 
 **Solution:**
+
 1. Check webhook signing secret in `.env`
-2. Verify endpoint URL in Stripe Dashboard
-3. Check backend logs: `pm2 logs vgcmail-api`
+
+1. Verify endpoint URL in Stripe Dashboard
+
+1. Check backend logs: `pm2 logs vgcmail-api`
 
 ---
 
@@ -647,12 +701,17 @@ Use Cloudflare or DigitalOcean Spaces CDN for static assets.
 ## 💰 Cost Breakdown
 
 **DigitalOcean Droplet:**
+
 - $12/month (2 GB RAM) - Recommended for production
+
 - $24/month (4 GB RAM) - For higher traffic
 
 **Additional Services:**
+
 - Supabase: Free tier (upgrade as needed)
+
 - Stripe: 2.9% + $0.30 per transaction
+
 - Domain: ~$12/year
 
 **Total Monthly Cost:** ~$12-24/month
@@ -693,30 +752,47 @@ sudo certbot renew
 
 ## ✅ Deployment Checklist
 
-- [ ] DigitalOcean Droplet created
-- [ ] DNS records configured
-- [ ] Server updated and secured
-- [ ] Node.js, pnpm, PM2, Nginx installed
-- [ ] Application cloned from GitHub
-- [ ] Backend `.env` configured
-- [ ] Frontend `.env` configured
-- [ ] Frontend built (`pnpm run build`)
-- [ ] Backend started with PM2
-- [ ] Nginx configured
-- [ ] SSL certificates obtained
-- [ ] Stripe webhooks configured
-- [ ] Supabase URLs updated
-- [ ] Application tested end-to-end
-- [ ] Monitoring setup
+- [x] DigitalOcean Droplet created
+
+- [x] DNS records configured
+
+- [x] Server updated and secured
+
+- [x] Node.js, pnpm, PM2, Nginx installed
+
+- [x] Application cloned from GitHub
+
+- [x] Backend `.env` configured
+
+- [x] Frontend `.env` configured
+
+- [x] Frontend built (`pnpm run build`)
+
+- [x] Backend started with PM2
+
+- [x] Nginx configured
+
+- [x] SSL certificates obtained
+
+- [x] Stripe webhooks configured
+
+- [x] Supabase URLs updated
+
+- [x] Application tested end-to-end
+
+- [x] Monitoring setup
 
 ---
 
 ## 🎉 Success!
 
 Your VGCMail application is now live at:
-- **Frontend:** https://vgcmail.app
-- **API:** https://api.vgcmail.app
-- **Dashboard:** https://vgcmail.app/dashboard
+
+- **Frontend:** [https://vgcmail.app](https://vgcmail.app)
+
+- **API:** [https://api.vgcmail.app](https://api.vgcmail.app)
+
+- **Dashboard:** [https://vgcmail.app/dashboard](https://vgcmail.app/dashboard)
 
 **Congratulations on deploying your SaaS application!** 🚀
 
@@ -725,10 +801,15 @@ Your VGCMail application is now live at:
 ## 📞 Need Help?
 
 If you encounter any issues:
-1. Check the troubleshooting section above
-2. Review PM2 logs: `pm2 logs vgcmail-api`
-3. Review Nginx logs: `sudo tail -f /var/log/nginx/error.log`
-4. Check Supabase logs in the dashboard
-5. Review Stripe webhook logs
 
-**Support:** support@vgcmail.app
+1. Check the troubleshooting section above
+
+1. Review PM2 logs: `pm2 logs vgcmail-api`
+
+1. Review Nginx logs: `sudo tail -f /var/log/nginx/error.log`
+
+1. Check Supabase logs in the dashboard
+
+1. Review Stripe webhook logs
+
+**Support:** [support@vgcmail.app](mailto:support@vgcmail.app)
