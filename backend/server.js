@@ -501,11 +501,12 @@ app.post('/api/gmail/sync-emails', async (req, res) => {
     // Store emails in database with tracking
     const trackedEmails = [];
     for (const email of emails) {
-      // Check if email already tracked
+      // Check if email already tracked (by subject and recipient as we don't store gmail_message_id)
       const { data: existing } = await supabase
         .from('tracked_emails')
         .select('id')
-        .eq('gmail_message_id', email.id)
+        .eq('email_subject', email.subject)
+        .eq('recipient_email', email.to)
         .eq('user_id', user.id)
         .single();
 
@@ -515,16 +516,16 @@ app.post('/api/gmail/sync-emails', async (req, res) => {
           .from('tracked_emails')
           .insert({
             user_id: user.id,
-            gmail_message_id: email.id,
-            subject: email.subject,
-            recipient: email.to,
-            sent_at: email.date,
+            email_subject: email.subject,
+            recipient_email: email.to,
           })
           .select()
           .single();
 
         if (!trackError) {
           trackedEmails.push(tracked);
+        } else {
+          console.error('Error inserting tracked email:', trackError);
         }
       }
     }
@@ -568,7 +569,7 @@ app.get('/api/tracked-emails', async (req, res) => {
         )
       `)
       .eq('user_id', user.id)
-      .order('sent_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(50);
 
     if (error) throw error;
