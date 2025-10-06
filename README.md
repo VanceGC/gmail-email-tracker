@@ -1,422 +1,278 @@
-# Gmail Email Tracker
+# 📧 VGCMail - Email Tracking for Gmail
 
-A complete email tracking solution for Gmail that tracks email opens and link clicks, similar to Mailsuite and Mailtrack.
+> Know when your emails are opened and links are clicked
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)
-![Chrome](https://img.shields.io/badge/chrome-extension-yellow.svg)
+A complete SaaS application for tracking email opens and link clicks in Gmail, built with React, Node.js, Supabase, and Stripe.
 
-## 🎯 Features
+**Live Demo:** Coming soon at [vgcmail.app](https://vgcmail.app)
 
-- **📧 Email Open Tracking** - Know exactly when recipients open your emails
-- **🔗 Link Click Tracking** - Track which links get clicked and when
-- **📊 Beautiful Dashboard** - View all tracking statistics in a modern web interface
-- **🔔 Real-time Updates** - See opens and clicks as they happen
-- **🎨 Chrome Extension** - Seamless integration with Gmail
-- **🔒 Privacy-Focused** - All data stored on your own server
-- **📱 Responsive Design** - Works on desktop, tablet, and mobile
+---
 
-## 🚀 Live Demo
+## ✨ Features
 
-**Dashboard:** [View Demo](https://3000-iy6nmzokkz7wmzz95h54r-4252293f.manusvm.computer/?user_id=demo@example.com)
+- 📬 **Email Open Tracking** - Know exactly when recipients open your emails
+- 🔗 **Link Click Tracking** - Track which links get clicked
+- 📊 **Analytics Dashboard** - View comprehensive statistics
+- 👥 **Multi-User Support** - Secure authentication with Supabase
+- 💳 **Stripe Integration** - Subscription billing with 14-day free trial
+- 🎨 **Beautiful UI** - Modern design with Tailwind CSS and animations
+- 🔒 **Secure** - Row-level security and encrypted data
+- 🚀 **Fast** - Built with modern technologies
 
-## 📋 Table of Contents
+---
 
-- [How It Works](#how-it-works)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
+## 🎯 Subscription Plans
 
-## 🔍 How It Works
+### Free
+- 50 tracked emails/month
+- Email open tracking
+- Basic analytics
+- **$0/month**
 
-### Email Open Tracking
+### Pro
+- **Unlimited** tracked emails
+- Email open + link click tracking
+- Advanced analytics
+- Priority support
+- **$9.99/month**
 
-The system embeds a tiny 1x1 transparent tracking pixel in your emails. When the recipient opens the email and their email client loads images, it requests the pixel from your backend server, which logs the open event.
+### Business
+- Everything in Pro
+- Team features
+- API access
+- Dedicated support
+- **$29.99/month**
 
-```html
-<img src="https://your-server.com/tracker/abc-123.png" width="1" height="1" style="display:none;" />
-```
+---
 
-### Link Click Tracking
+## 🛠️ Tech Stack
 
-All links in your emails are automatically wrapped with tracking URLs that redirect through your backend server:
+**Frontend:**
+- React 19 + Vite
+- Tailwind CSS + shadcn/ui
+- Framer Motion
+- React Router
+- Supabase JS
 
-```
-Original: https://example.com
-Tracked:  https://your-server.com/click/xyz-789?redirect=https://example.com
-```
+**Backend:**
+- Node.js + Express
+- Supabase (PostgreSQL)
+- Stripe API
+- RESTful API
 
-When clicked, the backend logs the event and immediately redirects to the original destination.
+**Infrastructure:**
+- Supabase for database & auth
+- Stripe for payments
+- GitHub for version control
 
-## 📦 Installation
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
+- Node.js 18+
+- pnpm (for frontend)
+- Supabase account
+- Stripe account
 
-- Node.js 18+ and npm
-- Google Chrome browser
-- A server to host the backend (for production)
-
-### Backend Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/VanceGC/gmail-email-tracker.git
-   cd gmail-email-tracker
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Start the server:**
-   ```bash
-   npm start
-   ```
-
-   The server will run on `http://localhost:3000` by default.
-
-4. **Access the dashboard:**
-   ```
-   http://localhost:3000/?user_id=your.email@gmail.com
-   ```
-
-### Chrome Extension Setup
-
-1. **Open Chrome Extensions:**
-   - Navigate to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top-right)
-
-2. **Load the extension:**
-   - Click "Load unpacked"
-   - Select the `extension` folder from this repository
-
-3. **Configure the extension:**
-   - Click the extension icon (📧) in your toolbar
-   - Enter your backend URL (e.g., `http://localhost:3000`)
-   - Enter your Gmail address
-   - Click "Save Settings"
-
-## ⚙️ Configuration
-
-### Backend Configuration
-
-Edit environment variables or modify `app.js`:
-
-```javascript
-const PORT = process.env.PORT || 3000;
-```
-
-### Extension Configuration
-
-Configure through the extension popup:
-- **Backend Server URL** - Your backend server address
-- **Gmail Address** - Your email address for tracking
-- **Auto-track** - Enable/disable automatic tracking
-
-## 📖 Usage
-
-### Sending Tracked Emails
-
-1. Open Gmail and compose a new email
-2. Write your email normally
-3. When auto-tracking is enabled, you'll see "📧 Tracking enabled"
-4. Click Send - tracking is automatic!
-
-### Viewing Tracking Data
-
-**Dashboard:**
-- Visit your backend URL in a browser
-- View all tracked emails with statistics
-- Click "View Detailed Logs" for individual email details
-
-**Extension Popup:**
-- Click the extension icon
-- See quick stats (total tracked, total opens)
-- Click "Open Dashboard" for full view
-
-### API Usage
-
-Create tracking pixels programmatically:
-
+### 1. Clone the Repository
 ```bash
-curl -X POST http://localhost:3000/api/pixels/create \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email_subject": "Hello World",
-    "recipient_email": "recipient@example.com",
-    "user_id": "sender@gmail.com",
-    "links": ["https://example.com"]
-  }'
+git clone https://github.com/VanceGC/vgcmail-app.git
+cd vgcmail-app
 ```
 
-## 📚 API Documentation
+### 2. Set Up Database
+1. Create a Supabase project
+2. Run the SQL in `supabase-schema.sql` in the SQL Editor
+3. Enable email authentication
 
-### Endpoints
+### 3. Configure Environment Variables
 
-#### Create Tracking Pixel
-```
-POST /api/pixels/create
-```
-
-**Request Body:**
-```json
-{
-  "email_subject": "string",
-  "recipient_email": "string",
-  "user_id": "string",
-  "links": ["string"]
-}
-```
-
-**Response:**
-```json
-{
-  "pixel_id": "uuid",
-  "tracking_url": "string",
-  "wrapped_links": {
-    "original_url": "tracking_url"
-  }
-}
+**Backend (.env):**
+```env
+PORT=3001
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_service_key
+STRIPE_SECRET_KEY=your_stripe_secret
+STRIPE_WEBHOOK_SECRET=your_webhook_secret
+STRIPE_PRICE_PRO=your_pro_price_id
+STRIPE_PRICE_BUSINESS=your_business_price_id
+FRONTEND_URL=http://localhost:5173
 ```
 
-#### Get User's Tracked Emails
-```
-GET /api/pixels/:user_id
-```
-
-**Response:**
-```json
-{
-  "pixels": [
-    {
-      "id": "uuid",
-      "email_subject": "string",
-      "recipient_email": "string",
-      "open_count": 0,
-      "click_count": 0,
-      "created_at": "timestamp"
-    }
-  ]
-}
+**Frontend (.env):**
+```env
+VITE_API_URL=http://localhost:3001
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 ```
 
-#### Get Tracking Statistics
-```
-GET /api/pixels/:pixel_id/stats
-```
+### 4. Install Dependencies
 
-**Response:**
-```json
-{
-  "opens": [...],
-  "clicks": [...],
-  "total_opens": 0,
-  "total_clicks": 0
-}
-```
-
-#### Tracking Pixel Endpoint
-```
-GET /tracker/:pixel_id.png
-```
-Returns a 1x1 transparent PNG and logs the open event.
-
-#### Link Click Tracking
-```
-GET /click/:link_id?redirect=<url>
-```
-Logs the click event and redirects to the original URL.
-
-## 🌐 Deployment
-
-### Deploy to Your Server
-
-1. **Copy files to your server:**
-   ```bash
-   scp -r gmail-email-tracker user@your-server.com:/var/www/
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   cd /var/www/gmail-email-tracker
-   npm install --production
-   ```
-
-3. **Set up process manager (PM2):**
-   ```bash
-   npm install -g pm2
-   pm2 start app.js --name gmail-tracker
-   pm2 save
-   pm2 startup
-   ```
-
-4. **Configure reverse proxy (nginx):**
-   ```nginx
-   server {
-       listen 80;
-       server_name your-domain.com;
-       
-       location / {
-           proxy_pass http://localhost:3000;
-           proxy_http_version 1.1;
-           proxy_set_header Upgrade $http_upgrade;
-           proxy_set_header Connection 'upgrade';
-           proxy_set_header Host $host;
-           proxy_cache_bypass $http_upgrade;
-       }
-   }
-   ```
-
-5. **Set up SSL with Let's Encrypt:**
-   ```bash
-   sudo certbot --nginx -d your-domain.com
-   ```
-
-### Deploy to Cloud Platforms
-
-#### Heroku
+**Backend:**
 ```bash
-heroku create your-app-name
-git push heroku main
-```
-
-#### Railway
-```bash
-railway login
-railway init
-railway up
-```
-
-#### DigitalOcean App Platform
-- Connect your GitHub repository
-- Select Node.js environment
-- Deploy automatically
-
-## 🛠️ Development
-
-### Project Structure
-
-```
-gmail-email-tracker/
-├── app.js                 # Main Express server
-├── database.js            # SQLite database setup
-├── package.json           # Node.js dependencies
-├── public/
-│   └── images/
-│       └── pixel.png      # 1x1 tracking pixel
-├── views/
-│   ├── index.ejs          # Dashboard template
-│   └── logs.ejs           # Detailed logs template
-└── extension/
-    ├── manifest.json      # Extension manifest
-    ├── popup.html         # Extension popup
-    ├── popup.js           # Popup logic
-    ├── icons/             # Extension icons
-    └── scripts/
-        ├── background.js  # Background service worker
-        ├── content.js     # Content script
-        └── gmail-integration.js  # Gmail integration
-```
-
-### Running in Development
-
-```bash
-# Install dependencies
+cd backend
 npm install
+```
 
-# Start server with auto-reload
-npm run dev
+**Frontend:**
+```bash
+cd frontend
+pnpm install
+```
 
-# Or start normally
+### 5. Start Development Servers
+
+**Backend:**
+```bash
+cd backend
 npm start
 ```
 
-### Database Schema
-
-**Pixels Table:**
-```sql
-CREATE TABLE pixels (
-  id TEXT PRIMARY KEY,
-  email_subject TEXT,
-  recipient_email TEXT,
-  user_id TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+**Frontend:**
+```bash
+cd frontend
+pnpm run dev
 ```
 
-**Opens Table:**
-```sql
-CREATE TABLE opens (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  pixel_id TEXT,
-  opened_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  ip_address TEXT,
-  user_agent TEXT,
-  FOREIGN KEY (pixel_id) REFERENCES pixels(id)
-);
+Visit http://localhost:5173 to see the app!
+
+---
+
+## 📁 Project Structure
+
+```
+vgcmail-app/
+├── backend/              # Express API server
+│   ├── server.js        # Main server file
+│   ├── .env             # Environment variables
+│   └── package.json     # Dependencies
+├── frontend/            # React application
+│   ├── src/
+│   │   ├── pages/      # Page components
+│   │   ├── components/ # UI components
+│   │   ├── lib/        # Utilities
+│   │   └── App.jsx     # Main app
+│   ├── .env            # Frontend config
+│   └── package.json    # Dependencies
+├── supabase-schema.sql # Database schema
+├── PROJECT_SUMMARY.md  # Detailed documentation
+├── DEPLOYMENT_GUIDE.md # Deployment instructions
+└── README.md           # This file
 ```
 
-**Links Table:**
-```sql
-CREATE TABLE links (
-  id TEXT PRIMARY KEY,
-  pixel_id TEXT,
-  original_url TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (pixel_id) REFERENCES pixels(id)
-);
+---
+
+## 🔌 API Endpoints
+
+### Authentication
+- Uses Supabase Auth (handled by frontend)
+
+### Tracking
+```
+POST /api/track/email              - Create tracked email
+GET  /api/track/pixel/:emailId     - Tracking pixel
+GET  /api/track/link/:linkId       - Link click redirect
+POST /api/track/create-link        - Create tracked link
 ```
 
-**Clicks Table:**
-```sql
-CREATE TABLE clicks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  link_id TEXT,
-  clicked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  ip_address TEXT,
-  user_agent TEXT,
-  FOREIGN KEY (link_id) REFERENCES links(id)
-);
+### User Data
+```
+GET /api/emails/:userId            - Get user's tracked emails
+GET /api/email/:emailId            - Get email details
 ```
 
-## ⚠️ Known Limitations
+### Billing
+```
+POST /api/create-checkout-session  - Start Stripe checkout
+POST /api/create-portal-session    - Open billing portal
+POST /api/webhooks/stripe          - Stripe webhook handler
+```
 
-### Gmail Image Proxy
-- Gmail proxies images through Google's servers
-- You'll see Google's proxy IP instead of recipient's real IP
-- Gmail caches images, so subsequent opens may not be detected
-- This is a limitation of all email tracking systems
+---
 
-### Image Blocking
-- Some email clients block images by default
-- Tracking won't work until recipient enables images
-- No workaround available
+## 🗄️ Database Schema
 
-### Privacy Considerations
-- Recipients can detect tracking pixels by inspecting email HTML
-- Always comply with privacy laws (GDPR, CAN-SPAM, etc.)
-- Consider adding tracking disclosure to email footers
+### Tables
+- `users` - User profiles and subscriptions
+- `tracked_emails` - Emails being tracked
+- `email_opens` - Open event logs
+- `tracked_links` - Links within emails
+- `link_clicks` - Click event logs
+
+### Views
+- `email_stats` - Aggregated email statistics
+
+### Functions
+- `can_track_email()` - Check tracking limits
+- `reset_monthly_tracking_counters()` - Reset monthly counters
+
+See `supabase-schema.sql` for complete schema.
+
+---
 
 ## 🔒 Security
 
-### Current Implementation
-- CORS enabled for extension access
-- SQLite database with local storage
-- No authentication required (development mode)
+- **Row Level Security (RLS)** - Users can only access their own data
+- **Supabase Auth** - Secure authentication
+- **Stripe Integration** - PCI-compliant payments
+- **Environment Variables** - Sensitive data protected
+- **CORS Configuration** - Restricted API access
 
-### Production Recommendations
-- Add API key authentication
-- Implement rate limiting
-- Use HTTPS with SSL certificate
-- Add user authentication for dashboard
-- Implement data encryption
-- Add GDPR compliance features
+---
+
+## 🧪 Testing
+
+### Test Stripe Checkout
+Use these test cards:
+- **Success:** 4242 4242 4242 4242
+- **Decline:** 4000 0000 0000 0002
+- **3D Secure:** 4000 0025 0000 3155
+
+### Test Email Tracking
+1. Create a tracked email via API
+2. Open the pixel URL in a browser
+3. Check the `email_opens` table
+
+---
+
+## 📚 Documentation
+
+- **[Project Summary](PROJECT_SUMMARY.md)** - Complete feature list and architecture
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Step-by-step deployment instructions
+- **[Supabase Schema](supabase-schema.sql)** - Database structure
+
+---
+
+## 🚀 Deployment
+
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed instructions.
+
+**Quick Deploy:**
+1. Deploy backend to Railway/Render
+2. Deploy frontend to Vercel/Netlify
+3. Configure Stripe webhooks
+4. Update environment variables
+5. Configure custom domain
+
+---
+
+## 🛣️ Roadmap
+
+- [x] Multi-user authentication
+- [x] Stripe subscription billing
+- [x] Email open tracking
+- [x] Link click tracking
+- [x] Basic dashboard
+- [ ] Enhanced analytics dashboard
+- [ ] Real-time notifications
+- [ ] Chrome extension multi-user auth
+- [ ] Team collaboration features
+- [ ] API access for Business plan
+- [ ] Mobile app
+- [ ] Email templates
+- [ ] A/B testing
+
+---
 
 ## 🤝 Contributing
 
@@ -428,36 +284,43 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+---
 
-- Inspired by [Mailsuite](https://mailsuite.com/) and [Mailtrack](https://mailtrack.io/)
-- Built with [Express](https://expressjs.com/), [SQLite](https://www.sqlite.org/), and [Chrome Extensions API](https://developer.chrome.com/docs/extensions/)
+## 💬 Support
 
-## 📞 Support
-
-For issues, questions, or contributions:
-- Open an issue on GitHub
-- Check the [Installation Guide](INSTALLATION_GUIDE.md)
-- Review the [Project Summary](PROJECT_SUMMARY.md)
-
-## 🎯 Roadmap
-
-- [ ] Real-time WebSocket notifications
-- [ ] User authentication system
-- [ ] Group email tracking
-- [ ] Email campaigns feature
-- [ ] Mail merge functionality
-- [ ] Advanced analytics dashboard
-- [ ] Mobile app (iOS/Android)
-- [ ] Outlook integration
-- [ ] CRM integrations (Salesforce, HubSpot)
+- **Email:** support@vgcmail.app
+- **GitHub Issues:** [Create an issue](https://github.com/VanceGC/vgcmail-app/issues)
+- **Documentation:** [Project Summary](PROJECT_SUMMARY.md)
 
 ---
 
-Made with ❤️ for better email tracking
+## 🙏 Acknowledgments
 
-**Star ⭐ this repo if you find it useful!**
+- [Supabase](https://supabase.com) - Backend infrastructure
+- [Stripe](https://stripe.com) - Payment processing
+- [shadcn/ui](https://ui.shadcn.com) - UI components
+- [Tailwind CSS](https://tailwindcss.com) - Styling
+- [Lucide Icons](https://lucide.dev) - Icons
+
+---
+
+## 📊 Stats
+
+- **Frontend:** React 19 + Vite
+- **Backend:** Node.js + Express
+- **Database:** PostgreSQL (Supabase)
+- **Payments:** Stripe
+- **UI:** Tailwind CSS + shadcn/ui
+- **Animations:** Framer Motion
+
+---
+
+**Built with ❤️ for email tracking professionals**
+
+[Website](https://vgcmail.app) • [GitHub](https://github.com/VanceGC/vgcmail-app) • [Support](mailto:support@vgcmail.app)
