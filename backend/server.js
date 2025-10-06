@@ -589,6 +589,153 @@ app.get('/api/tracked-emails', async (req, res) => {
   }
 });
 
+// Extension API: Verify API key
+app.post('/api/verify-key', async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    
+    if (!apiKey) {
+      return res.status(400).json({ error: 'API key required' });
+    }
+
+    // For now, use the API key as the user's auth token
+    const { data: { user }, error } = await supabase.auth.getUser(apiKey);
+    
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid API key' });
+    }
+
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    res.json({
+      valid: true,
+      email: user.email,
+      userId: user.id,
+      subscription: profile?.subscription_tier || 'free'
+    });
+  } catch (error) {
+    console.error('Error verifying API key:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Extension API: Create tracking
+app.post('/api/track/create', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const { trackingId, subject, recipient } = req.body;
+
+    // Create tracked email
+    const { data: tracked, error } = await supabase
+      .from('tracked_emails')
+      .insert({
+        id: trackingId,
+        user_id: user.id,
+        email_subject: subject,
+        recipient_email: recipient
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      trackingId: tracked.id,
+      pixelUrl: `${process.env.FRONTEND_URL || 'https://api.vgcmail.app'}/api/track/open/${trackingId}`
+    });
+  } catch (error) {
+    console.error('Error creating tracking:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Extension API: Track email open
+app.get('/api/track/open/:trackingId', async (req, res) => {
+  try {
+    const { trackingId } = req.params;
+
+    // Record the open
+    const { error } = await supabase
+      .from('email_opens')
+      .insert({
+        tracked_email_id: trackingId,
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent']
+      });
+
+    if (error) {
+      console.error('Error recording open:', error);
+    }
+
+    // Return 1x1 transparent pixel
+    const pixel = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      'base64'
+    );
+
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.send(pixel);
+  } catch (error) {
+    console.error('Error tracking open:', error);
+    res.status(500).send();
+  }
+});
+
+// Extension API: Get stats
+app.get('/api/stats', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Get tracked emails count
+    const { count: trackedCount } = await supabase
+      .from('tracked_emails')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    // Get opens count
+    const { count: opensCount } = await supabase
+      .from('email_opens')
+      .select('tracked_email_id, tracked_emails!inner(user_id)', { count: 'exact', head: true })
+      .eq('tracked_emails.user_id', user.id);
+
+    res.json({
+      tracked: trackedCount || 0,
+      opens: opensCount || 0
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ VGCMail API server running on port ${PORT}`);
