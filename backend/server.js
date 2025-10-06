@@ -483,6 +483,7 @@ app.post('/api/gmail/sync-emails', async (req, res) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
+    const { providerToken, providerRefreshToken } = req.body;
 
     // Get user from Supabase
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -490,13 +491,8 @@ app.post('/api/gmail/sync-emails', async (req, res) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    // Get user's provider token
-    const { data: session } = await supabase.auth.getSession();
-    const providerToken = session?.provider_token;
-    const providerRefreshToken = session?.provider_refresh_token;
-
     if (!providerToken) {
-      return res.status(400).json({ error: 'No Gmail access token found' });
+      return res.status(400).json({ error: 'No Gmail access token found. Please sign out and sign in again with Google.' });
     }
 
     const gmailService = new GmailService(providerToken, providerRefreshToken);

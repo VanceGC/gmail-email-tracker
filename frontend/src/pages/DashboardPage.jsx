@@ -78,17 +78,32 @@ export default function DashboardPage() {
   const handleSyncEmails = async () => {
     try {
       setSyncing(true);
-      await api.post('/gmail/sync-emails', {}, {
+      
+      // Get the provider token from the session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession?.provider_token) {
+        alert('Gmail access token not found. Please sign out and sign in again with Google.');
+        setSyncing(false);
+        return;
+      }
+
+      await api.post('/gmail/sync-emails', {
+        providerToken: currentSession.provider_token,
+        providerRefreshToken: currentSession.provider_refresh_token,
+      }, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
+      
       // Refresh tracked emails
       await fetchTrackedEmails();
       await fetchUserData();
+      alert('Emails synced successfully!');
     } catch (error) {
       console.error('Error syncing emails:', error);
-      alert('Error syncing emails. Please try again.');
+      alert(error.response?.data?.error || 'Error syncing emails. Please try again.');
     } finally {
       setSyncing(false);
     }
