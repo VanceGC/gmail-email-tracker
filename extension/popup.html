@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gmail Email Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 350px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .container {
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 20px;
+    }
+    
+    .logo {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    
+    h1 {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+    
+    .subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #4caf50;
+    }
+    
+    .status-indicator.inactive {
+      background: #f44336;
+    }
+    
+    .status-text {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
+    
+    .setting-group {
+      margin-bottom: 15px;
+    }
+    
+    .setting-label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    
+    .setting-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    
+    .setting-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .checkbox-input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      margin-top: 10px;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .info-text {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+    
+    .success-message {
+      padding: 10px;
+      background: #d4edda;
+      color: #155724;
+      border-radius: 5px;
+      font-size: 13px;
+      margin-bottom: 15px;
+      display: none;
+    }
+    
+    .error-message {
+      padding: 10px;
+      background: #f8d7da;
+      color: #721c24;
+      border-radius: 5px;
+      font-size: 13px;
+      margin-bottom: 15px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">📧</div>
+      <h1>Gmail Email Tracker</h1>
+      <p class="subtitle">Track opens & clicks</p>
+    </div>
+    
+    <div class="success-message" id="successMessage"></div>
+    <div class="error-message" id="errorMessage"></div>
+    
+    <div class="card">
+      <div class="status">
+        <div class="status-indicator" id="statusIndicator"></div>
+        <div class="status-text" id="statusText">Checking status...</div>
+      </div>
+      
+      <div class="setting-group">
+        <label class="setting-label" for="backendUrl">Backend Server URL</label>
+        <input 
+          type="text" 
+          id="backendUrl" 
+          class="setting-input" 
+          placeholder="http://localhost:3000"
+        />
+      </div>
+      
+      <div class="setting-group">
+        <label class="setting-label" for="userEmail">Your Gmail Address</label>
+        <input 
+          type="email" 
+          id="userEmail" 
+          class="setting-input" 
+          placeholder="your.email@gmail.com"
+        />
+      </div>
+      
+      <div class="setting-group">
+        <div class="checkbox-group">
+          <input 
+            type="checkbox" 
+            id="autoTrack" 
+            class="checkbox-input"
+            checked
+          />
+          <label class="setting-label" for="autoTrack" style="margin: 0;">
+            Auto-track all outgoing emails
+          </label>
+        </div>
+      </div>
+      
+      <button class="btn btn-primary" id="saveBtn">Save Settings</button>
+      <button class="btn btn-secondary" id="dashboardBtn">Open Dashboard</button>
+    </div>
+    
+    <div class="card">
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-value" id="totalTracked">0</div>
+          <div class="stat-label">Tracked Emails</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="totalOpens">0</div>
+          <div class="stat-label">Total Opens</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="info-text">
+      💡 <strong>How it works:</strong> This extension automatically adds tracking pixels to your outgoing Gmail emails. You'll be notified when recipients open your emails or click links.
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

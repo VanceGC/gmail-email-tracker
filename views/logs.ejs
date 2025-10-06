@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Tracking Logs - <%= pixel.email_subject %></title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .back-link {
+      display: inline-block;
+      color: #667eea;
+      text-decoration: none;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .email-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+    
+    .info-row {
+      display: flex;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+    
+    .info-label {
+      font-weight: 600;
+      color: #555;
+      width: 120px;
+    }
+    
+    .info-value {
+      color: #333;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    
+    .stat-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    
+    .stat-value {
+      color: #333;
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .logs-section {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .section-title {
+      color: #333;
+      font-size: 22px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .log-table th {
+      background: #f8f9fa;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #555;
+      font-size: 14px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .log-table td {
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+      color: #333;
+    }
+    
+    .log-table tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .timestamp {
+      color: #666;
+      font-size: 13px;
+    }
+    
+    .user-agent {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #666;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .ip-address {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+    
+    .url-cell {
+      max-width: 400px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .url-link {
+      color: #667eea;
+      text-decoration: none;
+    }
+    
+    .url-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a href="/?user_id=<%= pixel.user_id %>" class="back-link">← Back to Dashboard</a>
+      <h1>📊 Email Tracking Details</h1>
+      
+      <div class="email-info">
+        <div class="info-row">
+          <div class="info-label">Subject:</div>
+          <div class="info-value"><%= pixel.email_subject %></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Recipient:</div>
+          <div class="info-value"><%= pixel.recipient_email %></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Sent:</div>
+          <div class="info-value"><%= new Date(pixel.created_at).toLocaleString() %></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Tracking ID:</div>
+          <div class="info-value"><%= pixel.id %></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👁️</div>
+        <div class="stat-value"><%= opens.length %></div>
+        <div class="stat-label">Total Opens</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔗</div>
+        <div class="stat-value"><%= clicks.length %></div>
+        <div class="stat-label">Total Clicks</div>
+      </div>
+    </div>
+    
+    <div class="logs-section">
+      <h2 class="section-title">📬 Email Opens</h2>
+      
+      <% if (opens.length === 0) { %>
+        <div class="empty-state">
+          <p>No opens recorded yet. The email hasn't been opened or images are blocked.</p>
+        </div>
+      <% } else { %>
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>IP Address</th>
+              <th>User Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% opens.forEach(open => { %>
+              <tr>
+                <td class="timestamp"><%= new Date(open.opened_at).toLocaleString() %></td>
+                <td class="ip-address"><%= open.ip_address %></td>
+                <td class="user-agent" title="<%= open.user_agent %>"><%= open.user_agent %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+    
+    <div class="logs-section">
+      <h2 class="section-title">🖱️ Link Clicks</h2>
+      
+      <% if (clicks.length === 0) { %>
+        <div class="empty-state">
+          <p>No link clicks recorded yet.</p>
+        </div>
+      <% } else { %>
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>URL</th>
+              <th>IP Address</th>
+              <th>User Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% clicks.forEach(click => { %>
+              <tr>
+                <td class="timestamp"><%= new Date(click.clicked_at).toLocaleString() %></td>
+                <td class="url-cell">
+                  <a href="<%= click.original_url %>" target="_blank" class="url-link" title="<%= click.original_url %>">
+                    <%= click.original_url %>
+                  </a>
+                </td>
+                <td class="ip-address"><%= click.ip_address %></td>
+                <td class="user-agent" title="<%= click.user_agent %>"><%= click.user_agent %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>
