@@ -1,6 +1,43 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const api = {
+  // Generic GET method
+  async get(endpoint, options = {}) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Request failed');
+    }
+    
+    return response.json();
+  },
+
+  // Generic POST method
+  async post(endpoint, data = {}, options = {}) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Request failed');
+    }
+    
+    return response.json();
+  },
+
   // Stripe checkout
   async createCheckoutSession(priceId, userId, userEmail) {
     const response = await fetch(`${API_URL}/api/create-checkout-session`, {
