@@ -4,6 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
+const GmailService = require('./gmailService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -432,6 +433,161 @@ app.get('/api/email/:emailId', async (req, res) => {
     res.json({ email, opens, links });
   } catch (error) {
     console.error('Error fetching email details:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== GMAIL API ROUTES ====================
+
+// Get user's Gmail sent emails
+app.get('/api/gmail/sent-emails', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Get user from Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Get user's provider token from Supabase
+    const { data: session } = await supabase.auth.getSession();
+    const providerToken = session?.provider_token;
+    const providerRefreshToken = session?.provider_refresh_token;
+
+    if (!providerToken) {
+      return res.status(400).json({ error: 'No Gmail access token found. Please reconnect your Google account.' });
+    }
+
+    const gmailService = new GmailService(providerToken, providerRefreshToken);
+    const emails = await gmailService.getSentEmails(20);
+
+    res.json({ emails });
+  } catch (error) {
+    console.error('Error fetching Gmail sent emails:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Sync sent emails and create tracking records
+app.post('/api/gmail/sync-emails', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Get user from Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Get user's provider token
+    const { data: session } = await supabase.auth.getSession();
+    const providerToken = session?.provider_token;
+    const providerRefreshToken = session?.provider_refresh_token;
+
+    if (!providerToken) {
+      return res.status(400).json({ error: 'No Gmail access token found' });
+    }
+
+    const gmailService = new GmailService(providerToken, providerRefreshToken);
+    const emails = await gmailService.getSentEmails(50);
+
+    // Store emails in database with tracking
+    const trackedEmails = [];
+    for (const email of emails) {
+      // Check if email already tracked
+      const { data: existing } = await supabase
+        .from('tracked_emails')
+        .select('id')
+        .eq('gmail_message_id', email.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (!existing) {
+        // Create tracking record
+        const { data: tracked, error: trackError } = await supabase
+          .from('tracked_emails')
+          .insert({
+            user_id: user.id,
+            gmail_message_id: email.id,
+            subject: email.subject,
+            recipient: email.to,
+            sent_at: email.date,
+          })
+          .select()
+          .single();
+
+        if (!trackError) {
+          trackedEmails.push(tracked);
+        }
+      }
+    }
+
+    res.json({ 
+      message: 'Emails synced successfully',
+      synced: trackedEmails.length,
+      total: emails.length 
+    });
+  } catch (error) {
+    console.error('Error syncing emails:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get tracked emails for user
+app.get('/api/tracked-emails', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Get user from Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Get tracked emails with stats
+    const { data: emails, error } = await supabase
+      .from('tracked_emails')
+      .select(`
+        *,
+        email_opens (count),
+        tracked_links (
+          id,
+          link_clicks (count)
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('sent_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    // Format the response
+    const formattedEmails = emails.map(email => ({
+      ...email,
+      open_count: email.email_opens?.[0]?.count || 0,
+      click_count: email.tracked_links?.reduce((sum, link) => 
+        sum + (link.link_clicks?.[0]?.count || 0), 0) || 0,
+    }));
+
+    res.json({ emails: formattedEmails });
+  } catch (error) {
+    console.error('Error fetching tracked emails:', error);
     res.status(500).json({ error: error.message });
   }
 });
