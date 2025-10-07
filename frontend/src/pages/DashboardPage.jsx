@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import { Button } from '@/components/ui/button';
 import { Mail, LogOut, RefreshCw, Eye, MousePointerClick, Calendar, Chrome, CheckCircle, AlertCircle } from 'lucide-react';
 
-const EXTENSION_ID = 'YOUR_EXTENSION_ID'; // Will be updated after extension is published
+const EXTENSION_ID = 'mpjhjeffkfmnmmdhgmjndakjbmhmjfp'; // VGCMail Chrome Extension ID
 
 export default function DashboardPage() {
   const navigate = useNavigate();
