@@ -243,51 +243,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Extension Connection Banner */}
-        {!extensionConnected && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-            <div className="flex items-start space-x-4">
-              <Chrome className="h-8 w-8 text-blue-600 flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                  Connect Chrome Extension
-                </h3>
-                <p className="text-blue-800 mb-4">
-                  Install our Chrome extension to track emails directly from Gmail with one click.
-                </p>
-                <div className="flex items-center space-x-4">
-                  {!extensionInstalled ? (
-                    <>
-                      <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
-                        <Chrome className="h-4 w-4 mr-2" />
-                        Install Extension
-                      </Button>
-                      <span className="text-sm text-blue-700">
-                        <AlertCircle className="h-4 w-4 inline mr-1" />
-                        Extension not detected
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Button 
-                        onClick={handleConnectExtension}
-                        disabled={connectingExtension}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        {connectingExtension ? 'Connecting...' : 'Connect Extension'}
-                      </Button>
-                      <span className="text-sm text-green-700">
-                        <CheckCircle className="h-4 w-4 inline mr-1" />
-                        Extension detected - Click to connect
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Extension Connection Banner - Removed: Users connect via extension popup */}
 
         {/* Extension Connected Success */}
         {extensionConnected && (
