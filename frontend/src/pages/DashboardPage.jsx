@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { Button } from '@/components/ui/button';
-import { Mail, LogOut, RefreshCw, Eye, MousePointerClick, Calendar } from 'lucide-react';
+import { Mail, LogOut, RefreshCw, Eye, MousePointerClick, Calendar, Chrome, CheckCircle, AlertCircle } from 'lucide-react';
+
+const EXTENSION_ID = 'YOUR_EXTENSION_ID'; // Will be updated after extension is published
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -12,6 +14,9 @@ export default function DashboardPage() {
   const [trackedEmails, setTrackedEmails] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [extensionInstalled, setExtensionInstalled] = useState(false);
+  const [extensionConnected, setExtensionConnected] = useState(false);
+  const [connectingExtension, setConnectingExtension] = useState(false);
 
   useEffect(() => {
     // Get session
@@ -41,7 +46,89 @@ export default function DashboardPage() {
 
     fetchUserData();
     fetchTrackedEmails();
+    checkExtensionInstalled();
   }, [session]);
+
+  const checkExtensionInstalled = () => {
+    // Check if extension is installed by trying to send a message
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      try {
+        chrome.runtime.sendMessage(EXTENSION_ID, { type: 'CHECK_EXTENSION' }, (response) => {
+          if (chrome.runtime.lastError) {
+            setExtensionInstalled(false);
+          } else if (response && response.installed) {
+            setExtensionInstalled(true);
+            // Check if already connected
+            checkExtensionConnection();
+          }
+        });
+      } catch (error) {
+        setExtensionInstalled(false);
+      }
+    }
+  };
+
+  const checkExtensionConnection = async () => {
+    // Check if user has an API key (means extension might be connected)
+    try {
+      const response = await api.get('/api/get-api-key', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      setExtensionConnected(response.data.hasKey);
+    } catch (error) {
+      console.error('Error checking extension connection:', error);
+    }
+  };
+
+  const handleConnectExtension = async () => {
+    try {
+      setConnectingExtension(true);
+
+      // Generate API key
+      const response = await api.post('/api/generate-api-key', {}, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const { apiKey, userId, email } = response.data;
+
+      // Send to extension
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        chrome.runtime.sendMessage(
+          EXTENSION_ID,
+          {
+            type: 'CONNECT_EXTENSION',
+            data: {
+              apiKey,
+              userId,
+              userEmail: email,
+            },
+          },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              alert('Could not connect to extension. Make sure it is installed and enabled.');
+            } else if (response && response.success) {
+              setExtensionConnected(true);
+              alert('Extension connected successfully! You can now track emails in Gmail.');
+            } else {
+              alert('Failed to connect extension: ' + (response?.error || 'Unknown error'));
+            }
+            setConnectingExtension(false);
+          }
+        );
+      } else {
+        alert('Chrome extension API not available. Make sure you are using Chrome.');
+        setConnectingExtension(false);
+      }
+    } catch (error) {
+      console.error('Error connecting extension:', error);
+      alert('Error connecting extension: ' + (error.response?.data?.error || error.message));
+      setConnectingExtension(false);
+    }
+  };
 
   const fetchUserData = async () => {
     try {
@@ -155,6 +242,67 @@ export default function DashboardPage() {
             Your email tracking dashboard
           </p>
         </div>
+
+        {/* Extension Connection Banner */}
+        {!extensionConnected && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <div className="flex items-start space-x-4">
+              <Chrome className="h-8 w-8 text-blue-600 flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  Connect Chrome Extension
+                </h3>
+                <p className="text-blue-800 mb-4">
+                  Install our Chrome extension to track emails directly from Gmail with one click.
+                </p>
+                <div className="flex items-center space-x-4">
+                  {!extensionInstalled ? (
+                    <>
+                      <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
+                        <Chrome className="h-4 w-4 mr-2" />
+                        Install Extension
+                      </Button>
+                      <span className="text-sm text-blue-700">
+                        <AlertCircle className="h-4 w-4 inline mr-1" />
+                        Extension not detected
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Button 
+                        onClick={handleConnectExtension}
+                        disabled={connectingExtension}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {connectingExtension ? 'Connecting...' : 'Connect Extension'}
+                      </Button>
+                      <span className="text-sm text-green-700">
+                        <CheckCircle className="h-4 w-4 inline mr-1" />
+                        Extension detected - Click to connect
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Extension Connected Success */}
+        {extensionConnected && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-8">
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+              <div>
+                <h3 className="text-sm font-semibold text-green-900">Extension Connected</h3>
+                <p className="text-sm text-green-800">
+                  You can now track emails from Gmail. Open Gmail and compose an email to get started.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">

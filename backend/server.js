@@ -589,6 +589,75 @@ app.get('/api/tracked-emails', async (req, res) => {
   }
 });
 
+// Extension API: Generate API key for user
+app.post('/api/generate-api-key', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Call Supabase function to generate API key
+    const { data, error } = await supabase.rpc('create_user_api_key', {
+      p_user_id: user.id
+    });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      apiKey: data,
+      userId: user.id,
+      email: user.email
+    });
+  } catch (error) {
+    console.error('Error generating API key:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Extension API: Get user's API key
+app.get('/api/get-api-key', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Get user's API key from database
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select('api_key')
+      .eq('id', user.id)
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      apiKey: profile?.api_key || null,
+      hasKey: !!profile?.api_key
+    });
+  } catch (error) {
+    console.error('Error getting API key:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Extension API: Verify API key
 app.post('/api/verify-key', async (req, res) => {
   try {
@@ -598,25 +667,22 @@ app.post('/api/verify-key', async (req, res) => {
       return res.status(400).json({ error: 'API key required' });
     }
 
-    // For now, use the API key as the user's auth token
-    const { data: { user }, error } = await supabase.auth.getUser(apiKey);
-    
-    if (error || !user) {
+    // Look up user by API key using Supabase function
+    const { data, error } = await supabase.rpc('get_user_by_api_key', {
+      p_api_key: apiKey
+    });
+
+    if (error || !data || data.length === 0) {
       return res.status(401).json({ error: 'Invalid API key' });
     }
 
-    // Get user profile
-    const { data: profile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const userInfo = data[0];
 
     res.json({
       valid: true,
-      email: user.email,
-      userId: user.id,
-      subscription: profile?.subscription_tier || 'free'
+      email: userInfo.email,
+      userId: userInfo.user_id,
+      subscription: userInfo.subscription_tier
     });
   } catch (error) {
     console.error('Error verifying API key:', error);
@@ -633,10 +699,28 @@ app.post('/api/track/create', async (req, res) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      return res.status(401).json({ error: 'Invalid token' });
+    let userId;
+
+    // Try API key first (starts with 'vgc_')
+    if (token.startsWith('vgc_')) {
+      const { data, error } = await supabase.rpc('get_user_by_api_key', {
+        p_api_key: token
+      });
+      
+      if (error || !data || data.length === 0) {
+        return res.status(401).json({ error: 'Invalid API key' });
+      }
+      
+      userId = data[0].user_id;
+    } else {
+      // Try as auth token
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      
+      if (authError || !user) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+      
+      userId = user.id;
     }
 
     const { trackingId, subject, recipient } = req.body;
@@ -646,7 +730,7 @@ app.post('/api/track/create', async (req, res) => {
       .from('tracked_emails')
       .insert({
         id: trackingId,
-        user_id: user.id,
+        user_id: userId,
         email_subject: subject,
         recipient_email: recipient
       })
