@@ -3,13 +3,44 @@
 
   console.log('VGCMail Gmail integration v2 active');
 
+  // Create Trusted Types policy for safe HTML
+  let trustedHTMLPolicy;
+  if (window.trustedTypes && trustedTypes.createPolicy) {
+    try {
+      trustedHTMLPolicy = trustedTypes.createPolicy('vgcmail-html', {
+        createHTML: (string) => string
+      });
+    } catch (e) {
+      console.warn('VGCMail: Could not create Trusted Types policy:', e);
+    }
+  }
+
+  // Safe innerHTML setter
+  function safeSetInnerHTML(element, html) {
+    if (trustedHTMLPolicy) {
+      element.innerHTML = trustedHTMLPolicy.createHTML(html);
+    } else {
+      element.innerHTML = html;
+    }
+  }
+
   let composeWindows = new Map();
   let apiKey = null;
   let userId = null;
   let settingsReceived = false;
+  let settingsRequested = false;
 
-  // Get API key from extension storage
-  window.postMessage({ type: 'VGCMAIL_GET_SETTINGS' }, '*');
+  // Request settings
+  function requestSettings() {
+    if (!settingsRequested) {
+      console.log('VGCMail: Requesting settings from content script');
+      window.postMessage({ type: 'VGCMAIL_GET_SETTINGS' }, '*');
+      settingsRequested = true;
+    }
+  }
+
+  // Request settings immediately
+  requestSettings();
 
   // Listen for settings response
   window.addEventListener('message', (event) => {
@@ -18,6 +49,10 @@
       userId = event.data.payload.userId;
       settingsReceived = true;
       console.log('VGCMail: Settings received', { hasApiKey: !!apiKey, userId });
+      
+      if (!apiKey) {
+        console.warn('VGCMail: No API key found. Please connect the extension.');
+      }
       
       // Check for compose windows now that we have settings
       checkForComposeWindows();
@@ -162,7 +197,7 @@
       z-index: 1000;
       position: relative;
     `;
-    toggle.innerHTML = '<span style="margin-right: 4px;">✓</span> Tracking ON';
+    safeSetInnerHTML(toggle, '<span style="margin-right: 4px;">✓</span> Tracking ON');
     
     toggle.addEventListener('mouseenter', () => {
       toggle.style.transform = 'translateY(-1px)';
@@ -180,7 +215,7 @@
       
       toggle.setAttribute('data-tracking-enabled', newState.toString());
       toggle.style.background = newState ? '#10b981' : '#6b7280';
-      toggle.innerHTML = newState ? '<span style="margin-right: 4px;">✓</span> Tracking ON' : '<span style="margin-right: 4px;">✗</span> Tracking OFF';
+      safeSetInnerHTML(toggle, newState ? '<span style="margin-right: 4px;">✓</span> Tracking ON' : '<span style="margin-right: 4px;">✗</span> Tracking OFF');
       
       if (newState) {
         injectTrackingPixel(composeEl, composeId);
@@ -198,7 +233,7 @@
     // Show notification if no API key
     if (!apiKey && settingsReceived) {
       toggle.style.background = '#ef4444';
-      toggle.innerHTML = '<span style="margin-right: 4px;">⚠</span> Not Connected';
+      safeSetInnerHTML(toggle, '<span style="margin-right: 4px;">⚠</span> Not Connected');
       toggle.title = 'Click the extension icon to connect your account';
       toggle.style.cursor = 'not-allowed';
       return;

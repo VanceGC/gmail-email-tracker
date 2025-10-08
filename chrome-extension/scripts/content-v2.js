@@ -16,10 +16,15 @@ window.addEventListener('message', async (event) => {
   if (event.source !== window) return;
   
   if (event.data.type === 'VGCMAIL_GET_SETTINGS') {
-    console.log('VGCMail: Settings requested');
+    console.log('VGCMail Content: Settings requested from page script');
     
     try {
       const settings = await chrome.storage.sync.get(['apiKey', 'userId']);
+      
+      console.log('VGCMail Content: Retrieved from storage', { 
+        hasApiKey: !!settings.apiKey, 
+        userId: settings.userId 
+      });
       
       // Send settings back to page script
       window.postMessage({
@@ -30,9 +35,9 @@ window.addEventListener('message', async (event) => {
         }
       }, '*');
       
-      console.log('VGCMail: Settings sent to page script');
+      console.log('VGCMail Content: Settings sent to page script');
     } catch (error) {
-      console.error('VGCMail: Error getting settings:', error);
+      console.error('VGCMail Content: Error getting settings:', error);
       // Send empty settings
       window.postMessage({
         type: 'VGCMAIL_SETTINGS_RESPONSE',
