@@ -300,41 +300,55 @@
 
     console.log('VGCMail: Creating tracking', { trackingId, recipient, subject });
 
-    // Create tracking record
+    // Create tracking record via content script (to bypass CSP)
     try {
-      const response = await fetch('https://api.vgcmail.app/api/track/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
+      // Send message to content script to make API call
+      window.postMessage({
+        type: 'VGCMAIL_CREATE_TRACKING',
+        payload: {
           trackingId: trackingId,
           subject: subject,
-          recipient: recipient
-        })
+          recipient: recipient,
+          apiKey: apiKey
+        }
+      }, '*');
+
+      // Wait for response
+      const responsePromise = new Promise((resolve, reject) => {
+        const handler = (event) => {
+          if (event.data.type === 'VGCMAIL_TRACKING_CREATED') {
+            window.removeEventListener('message', handler);
+            resolve(event.data.payload);
+          } else if (event.data.type === 'VGCMAIL_TRACKING_ERROR') {
+            window.removeEventListener('message', handler);
+            reject(new Error(event.data.payload.error));
+          }
+        };
+        window.addEventListener('message', handler);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          window.removeEventListener('message', handler);
+          reject(new Error('Timeout waiting for tracking response'));
+        }, 10000);
       });
 
-      if (response.ok) {
-        console.log('VGCMail: Tracking created successfully');
-        
-        // Create and inject pixel
-        const pixel = document.createElement('img');
-        pixel.src = pixelUrl;
-        pixel.setAttribute('data-vgcmail-pixel', 'true');
-        pixel.setAttribute('data-tracking-id', trackingId);
-        pixel.style.cssText = 'width:1px;height:1px;border:0;display:none;';
-        pixel.alt = '';
-        pixel.width = 1;
-        pixel.height = 1;
+      const result = await responsePromise;
+      console.log('VGCMail: Tracking created successfully', result);
+      
+      // Create and inject pixel
+      const pixel = document.createElement('img');
+      pixel.src = pixelUrl;
+      pixel.setAttribute('data-vgcmail-pixel', 'true');
+      pixel.setAttribute('data-tracking-id', trackingId);
+      pixel.style.cssText = 'width:1px;height:1px;border:0;display:none;';
+      pixel.alt = '';
+      pixel.width = 1;
+      pixel.height = 1;
 
-        // Append to end of body
-        bodyField.appendChild(pixel);
-        console.log('VGCMail: Pixel injected');
-      } else {
-        const errorData = await response.json();
-        console.error('VGCMail: Failed to create tracking:', response.status, errorData);
-      }
+      // Append to end of body
+      bodyField.appendChild(pixel);
+      console.log('VGCMail: Pixel injected');
     } catch (error) {
       console.error('VGCMail: Error creating tracking:', error);
     }

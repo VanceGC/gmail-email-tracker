@@ -11,7 +11,7 @@ script.onload = function() {
 };
 (document.head || document.documentElement).appendChild(script);
 
-// Listen for settings request from page script
+// Listen for messages from page script
 window.addEventListener('message', async (event) => {
   if (event.source !== window) return;
   
@@ -45,6 +45,57 @@ window.addEventListener('message', async (event) => {
           apiKey: null,
           userId: null
         }
+      }, '*');
+    }
+  }
+  
+  // Handle tracking creation request
+  if (event.data.type === 'VGCMAIL_CREATE_TRACKING') {
+    console.log('VGCMail Content: Tracking creation requested');
+    
+    try {
+      const { trackingId, subject, recipient, apiKey } = event.data.payload;
+      
+      // Make API call from content script (has extension permissions)
+      const response = await fetch('https://api.vgcmail.app/api/track/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          trackingId: trackingId,
+          subject: subject,
+          recipient: recipient
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('VGCMail Content: Tracking created successfully');
+        
+        // Send success back to page script
+        window.postMessage({
+          type: 'VGCMAIL_TRACKING_CREATED',
+          payload: result
+        }, '*');
+      } else {
+        const errorData = await response.json();
+        console.error('VGCMail Content: Failed to create tracking:', response.status, errorData);
+        
+        // Send error back to page script
+        window.postMessage({
+          type: 'VGCMAIL_TRACKING_ERROR',
+          payload: { error: errorData.error || 'Failed to create tracking' }
+        }, '*');
+      }
+    } catch (error) {
+      console.error('VGCMail Content: Error creating tracking:', error);
+      
+      // Send error back to page script
+      window.postMessage({
+        type: 'VGCMAIL_TRACKING_ERROR',
+        payload: { error: error.message }
       }, '*');
     }
   }
