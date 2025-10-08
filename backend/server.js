@@ -17,7 +17,11 @@ const supabase = createClient(
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'https://mail.google.com',
+    'https://www.google.com'
+  ],
   credentials: true
 }));
 app.use(bodyParser.json());
