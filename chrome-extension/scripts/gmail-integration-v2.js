@@ -360,38 +360,84 @@
   }
 
   function extractRecipient(composeEl) {
+    console.log('VGCMail: Extracting recipient...');
+    
     // Strategy 1: Look for email chips/bubbles with email attribute
     const emailChips = composeEl.querySelectorAll('[email]');
+    console.log('VGCMail: Found email chips:', emailChips.length);
     for (const chip of emailChips) {
       const email = chip.getAttribute('email');
       if (email && email.includes('@')) {
+        console.log('VGCMail: Found recipient via email attribute:', email);
         return email;
       }
     }
     
     // Strategy 2: Look for data-hovercard-id
     const hovercards = composeEl.querySelectorAll('[data-hovercard-id]');
+    console.log('VGCMail: Found hovercards:', hovercards.length);
     for (const card of hovercards) {
       const email = card.getAttribute('data-hovercard-id');
       if (email && email.includes('@')) {
+        console.log('VGCMail: Found recipient via hovercard:', email);
         return email;
       }
     }
     
-    // Strategy 3: Look in To field container
-    const toContainer = composeEl.querySelector('.vR, [aria-label*="To" i]');
-    if (toContainer) {
-      const emailMatch = toContainer.textContent.match(/[\w.-]+@[\w.-]+\.\w+/);
-      if (emailMatch) return emailMatch[0];
+    // Strategy 3: Look for span with email class in To field
+    const toField = composeEl.querySelector('.vR, [aria-label*="To" i], .aoD.hl');
+    if (toField) {
+      console.log('VGCMail: Found To field, searching for email...');
+      
+      // Look for spans with email addresses
+      const spans = toField.querySelectorAll('span');
+      for (const span of spans) {
+        const text = span.textContent || span.innerText;
+        const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
+        if (emailMatch) {
+          console.log('VGCMail: Found recipient in span:', emailMatch[0]);
+          return emailMatch[0];
+        }
+      }
+      
+      // Search entire To field text
+      const emailMatch = toField.textContent.match(/[\w.-]+@[\w.-]+\.\w+/);
+      if (emailMatch) {
+        console.log('VGCMail: Found recipient in To field text:', emailMatch[0]);
+        return emailMatch[0];
+      }
+    } else {
+      console.log('VGCMail: Could not find To field');
     }
     
     // Strategy 4: Look for input field
-    const toInput = composeEl.querySelector('input[aria-label*="To" i], .vR input');
+    const toInput = composeEl.querySelector('input[aria-label*="To" i], .vR input, input[name="to"]');
     if (toInput && toInput.value) {
+      console.log('VGCMail: Found To input with value:', toInput.value);
       const emailMatch = toInput.value.match(/[\w.-]+@[\w.-]+\.\w+/);
-      if (emailMatch) return emailMatch[0];
+      if (emailMatch) {
+        console.log('VGCMail: Found recipient in input:', emailMatch[0]);
+        return emailMatch[0];
+      }
     }
     
+    // Strategy 5: Look for any element with email pattern in compose window
+    const allText = composeEl.textContent;
+    const emailMatches = allText.match(/[\w.-]+@[\w.-]+\.\w+/g);
+    if (emailMatches && emailMatches.length > 0) {
+      // Filter out common false positives
+      const validEmails = emailMatches.filter(email => 
+        !email.includes('example.com') && 
+        !email.includes('test.com') &&
+        !email.includes('vgcmail.app')
+      );
+      if (validEmails.length > 0) {
+        console.log('VGCMail: Found recipient via text search:', validEmails[0]);
+        return validEmails[0];
+      }
+    }
+    
+    console.log('VGCMail: No recipient found with any strategy');
     return null;
   }
 
