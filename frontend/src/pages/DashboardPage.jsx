@@ -13,7 +13,6 @@ export default function DashboardPage() {
   const [session, setSession] = useState(null);
   const [trackedEmails, setTrackedEmails] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [extensionInstalled, setExtensionInstalled] = useState(false);
   const [extensionConnected, setExtensionConnected] = useState(false);
   const [connectingExtension, setConnectingExtension] = useState(false);
@@ -162,40 +161,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSyncEmails = async () => {
-    try {
-      setSyncing(true);
-      
-      // Get the provider token from the session
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession?.provider_token) {
-        alert('Gmail access token not found. Please sign out and sign in again with Google.');
-        setSyncing(false);
-        return;
-      }
-
-      await api.post('/api/gmail/sync-emails', {
-        providerToken: currentSession.provider_token,
-        providerRefreshToken: currentSession.provider_refresh_token,
-      }, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-      
-      // Refresh tracked emails
-      await fetchTrackedEmails();
-      await fetchUserData();
-      alert('Emails synced successfully!');
-    } catch (error) {
-      console.error('Error syncing emails:', error);
-      alert(error.response?.data?.error || 'Error syncing emails. Please try again.');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
@@ -285,16 +250,17 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-xl font-semibold">Tracked Emails</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Your sent emails with tracking data
+                Emails sent with tracking enabled via the Chrome extension
               </p>
             </div>
             <Button 
-              onClick={handleSyncEmails} 
-              disabled={syncing}
+              onClick={fetchTrackedEmails} 
+              disabled={loading}
+              variant="outline"
               className="flex items-center space-x-2"
             >
-              <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-              <span>{syncing ? 'Syncing...' : 'Sync Gmail'}</span>
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </Button>
           </div>
 
@@ -308,12 +274,17 @@ export default function DashboardPage() {
                 <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No tracked emails yet</h3>
                 <p className="text-gray-600 mb-4">
-                  Click "Sync Gmail" to import your sent emails and start tracking
+                  Install the Chrome extension and send an email with tracking enabled to see it here
                 </p>
-                <Button onClick={handleSyncEmails} disabled={syncing}>
-                  <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Syncing...' : 'Sync Now'}
-                </Button>
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg max-w-md mx-auto">
+                  <h4 className="font-medium text-blue-900 mb-2">How to track emails:</h4>
+                  <ol className="text-sm text-blue-800 text-left space-y-2">
+                    <li>1. Install the VGCMail Chrome extension</li>
+                    <li>2. Open Gmail and compose a new email</li>
+                    <li>3. Look for the "✓ Tracking ON" button in the compose window</li>
+                    <li>4. Send your email - it will appear here with tracking data</li>
+                  </ol>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">

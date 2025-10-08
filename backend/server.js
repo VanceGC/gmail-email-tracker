@@ -557,29 +557,28 @@ app.get('/api/tracked-emails', async (req, res) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    // Get tracked emails with stats
+    // Use the email_stats view for proper aggregation
     const { data: emails, error } = await supabase
-      .from('tracked_emails')
-      .select(`
-        *,
-        email_opens (count),
-        tracked_links (
-          id,
-          link_clicks (count)
-        )
-      `)
+      .from('email_stats')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50);
 
     if (error) throw error;
 
-    // Format the response
+    // Format the response with proper field names
     const formattedEmails = emails.map(email => ({
-      ...email,
-      open_count: email.email_opens?.[0]?.count || 0,
-      click_count: email.tracked_links?.reduce((sum, link) => 
-        sum + (link.link_clicks?.[0]?.count || 0), 0) || 0,
+      id: email.email_id,
+      user_id: email.user_id,
+      subject: email.email_subject,
+      recipient: email.recipient_email,
+      sent_at: email.created_at,
+      created_at: email.created_at,
+      open_count: email.open_count || 0,
+      click_count: email.click_count || 0,
+      last_opened_at: email.last_opened_at,
+      last_clicked_at: email.last_clicked_at
     }));
 
     res.json({ emails: formattedEmails });
