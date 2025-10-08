@@ -27,7 +27,7 @@
   "content_scripts": [
     {
       "matches": ["https://mail.google.com/*"],
-      "js": ["scripts/content.js"],
+      "js": ["scripts/content-v2.js"],
       "css": ["styles/gmail.css"],
       "run_at": "document_end"
     }
@@ -37,8 +37,14 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["scripts/gmail-integration.js"],
+      "resources": ["scripts/gmail-integration-v2.js"],
       "matches": ["https://mail.google.com/*"]
     }
-  ]
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://vgcmail.app/*",
+      "http://localhost:5173/*"
+    ]
+  }
 }
